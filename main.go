@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -22,5 +23,20 @@ func main() {
 	}
 
 	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, gameServerPort)
-	sqc.exportMatchData()
+	if err != nil {
+		log.Fatalf("Error starting server query client")
+	}
+
+	handlers := &Handlers{
+		sqc: sqc,
+	}
+
+	web := gin.Default()
+	web.GET("/health", handlers.health)
+	web.GET("/intermission", handlers.intermission)
+
+	err = web.Run()
+	if err != nil {
+		log.Fatalf("Error starting server lol\n")
+	}
 }
