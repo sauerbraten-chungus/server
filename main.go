@@ -17,12 +17,14 @@ func main() {
 
 	playerServiceIP := os.Getenv("PLAYER_SERVICE_IP")
 	gameServerIP := os.Getenv("GAME_SERVER_IP")
+	authServiceIP := os.Getenv("AUTH_SERVICE_IP")
 	gameServerPort, err := strconv.Atoi(os.Getenv("GAME_SERVER_PORT"))
+	secretKey := os.Getenv("SECRET_CHUNGUS")
 	if err != nil {
 		log.Fatalf("Error loading game server port\n")
 	}
 
-	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, gameServerPort)
+	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, authServiceIP, gameServerPort)
 	if err != nil {
 		log.Fatalf("Error starting server query client")
 	}
@@ -33,7 +35,11 @@ func main() {
 
 	web := gin.Default()
 	web.GET("/health", handlers.health)
-	web.GET("/intermission", handlers.intermission)
+	protected := web.Group("/")
+	protected.Use(JWTAuthMiddleware(secretKey))
+	{
+		protected.GET("intermission", handlers.intermission)
+	}
 
 	err = web.Run()
 	if err != nil {

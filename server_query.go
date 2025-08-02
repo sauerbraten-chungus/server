@@ -23,6 +23,9 @@ type ServerQueryClient struct {
 	httpClient      *http.Client
 	server          *extinfo.Server
 	playerServiceIP string
+	authServiceIP   string
+	token           string
+	apiKey          string
 }
 
 func (sqc ServerQueryClient) exportMatchData() {
@@ -84,7 +87,24 @@ func (sqc ServerQueryClient) exportMatchData() {
 	fmt.Printf("respBody: %s\n", respBody)
 }
 
-func NewServerQueryClient(serverIP, playerServiceIP string, port int) (*ServerQueryClient, error) {
+// func (sqc ServerQueryClient) obtainJWT() error {
+// 	url := fmt.Sprintf("%s/auth", sqc.authServiceIP)
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		return fmt.Errorf("Error creating request: %w", err)
+// 	}
+// 	req.Header.Set("CHUNGUS-KEY", sqc.apiKey)
+
+// 	resp, err := sqc.httpClient.Do(req)
+// 	if err != nil {
+// 		return fmt.Errorf("Error getting response: %w", err)
+// 	}
+// 	defer resp.Body.Close()
+
+// 	fmt.Printf("respBody: %s\n", respBody)
+// }
+
+func NewServerQueryClient(serverIP, playerServiceIP, authServiceIP string, port int) (*ServerQueryClient, error) {
 	serverAddr := net.UDPAddr{
 		IP:   net.ParseIP(serverIP),
 		Port: port,
@@ -104,6 +124,7 @@ func NewServerQueryClient(serverIP, playerServiceIP string, port int) (*ServerQu
 		server:          server,
 		httpClient:      httpClient,
 		playerServiceIP: playerServiceIP,
+		authServiceIP:   authServiceIP,
 	}
 
 	return sqc, nil
