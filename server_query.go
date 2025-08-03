@@ -12,6 +12,11 @@ import (
 	"github.com/sauerbraten/extinfo"
 )
 
+type AuthResponse struct {
+	Token string `json:"token"`
+	Error string `json:"error"`
+}
+
 type Player struct {
 	Name     string `json:"name"`
 	Frags    int    `json:"frags"`
@@ -28,7 +33,7 @@ type ServerQueryClient struct {
 	apiKey          string
 }
 
-func (sqc ServerQueryClient) exportMatchData() {
+func (sqc *ServerQueryClient) exportMatchData() {
 	clients, err := sqc.server.GetAllClientInfo()
 	if err != nil {
 		fmt.Println(err)
@@ -70,6 +75,9 @@ func (sqc ServerQueryClient) exportMatchData() {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+sqc.token)
+
+	fmt.Println(sqc.token)
 
 	resp, err := sqc.httpClient.Do(req)
 	if err != nil {
@@ -87,24 +95,34 @@ func (sqc ServerQueryClient) exportMatchData() {
 	fmt.Printf("respBody: %s\n", respBody)
 }
 
-// func (sqc ServerQueryClient) obtainJWT() error {
-// 	url := fmt.Sprintf("%s/auth", sqc.authServiceIP)
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		return fmt.Errorf("Error creating request: %w", err)
-// 	}
-// 	req.Header.Set("CHUNGUS-KEY", sqc.apiKey)
+func (sqc *ServerQueryClient) obtainJWT() (string, error) {
+	url := fmt.Sprintf("%s/auth", sqc.authServiceIP)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", fmt.Errorf("Error creating request: %w", err)
+	}
+	req.Header.Set("CHUNGUS-KEY", sqc.apiKey)
 
-// 	resp, err := sqc.httpClient.Do(req)
-// 	if err != nil {
-// 		return fmt.Errorf("Error getting response: %w", err)
-// 	}
-// 	defer resp.Body.Close()
+	resp, err := sqc.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("Error getting response: %w", err)
+	}
+	defer resp.Body.Close()
 
-// 	fmt.Printf("respBody: %s\n", respBody)
-// }
+	var authResp AuthResponse
+	err = json.NewDecoder(resp.Body).Decode(&authResp)
+	if err != nil {
+		return "", fmt.Errorf("Error decoding response: %w", err)
+	}
 
-func NewServerQueryClient(serverIP, playerServiceIP, authServiceIP string, port int) (*ServerQueryClient, error) {
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Auth error: %s", authResp.Error)
+	}
+
+	return authResp.Token, nil
+}
+
+func NewServerQueryClient(serverIP, playerServiceIP, authServiceIP, apiKey string, port int) (*ServerQueryClient, error) {
 	serverAddr := net.UDPAddr{
 		IP:   net.ParseIP(serverIP),
 		Port: port,
@@ -125,7 +143,15 @@ func NewServerQueryClient(serverIP, playerServiceIP, authServiceIP string, port 
 		httpClient:      httpClient,
 		playerServiceIP: playerServiceIP,
 		authServiceIP:   authServiceIP,
+		apiKey:          apiKey,
 	}
+
+	token, err := sqc.obtainJWT()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	sqc.token = token
 
 	return sqc, nil
 }

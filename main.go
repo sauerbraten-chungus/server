@@ -20,11 +20,12 @@ func main() {
 	authServiceIP := os.Getenv("AUTH_SERVICE_IP")
 	gameServerPort, err := strconv.Atoi(os.Getenv("GAME_SERVER_PORT"))
 	secretKey := os.Getenv("SECRET_CHUNGUS")
+	apiKey := os.Getenv("CHUNGUS_KEY")
 	if err != nil {
 		log.Fatalf("Error loading game server port\n")
 	}
 
-	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, authServiceIP, gameServerPort)
+	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, authServiceIP, apiKey, gameServerPort)
 	if err != nil {
 		log.Fatalf("Error starting server query client")
 	}
