@@ -12,7 +12,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file\n")
+		log.Printf("Error loading .env file: %s\n", err)
 	}
 
 	playerServiceIP := os.Getenv("PLAYER_SERVICE_IP")
@@ -22,12 +22,12 @@ func main() {
 	secretKey := os.Getenv("SECRET_CHUNGUS")
 	apiKey := os.Getenv("CHUNGUS_KEY")
 	if err != nil {
-		log.Fatalf("Error loading game server port\n")
+		log.Fatalf("Error loading game server port: %s\n", err)
 	}
 
 	sqc, err := NewServerQueryClient(gameServerIP, playerServiceIP, authServiceIP, apiKey, gameServerPort)
 	if err != nil {
-		log.Fatalf("Error starting server query client")
+		log.Fatalf("Error starting server query client: %s\n", err)
 	}
 
 	handlers := &Handlers{
