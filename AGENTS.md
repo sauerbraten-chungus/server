@@ -1,4 +1,4 @@
-# CLAUDE.md — server (SQC)
+# AGENTS.md — server (SQC)
 
 ## Overview
 
@@ -6,7 +6,7 @@ Server Query Client (SQC) — a Go sidecar that queries game server stats via UD
 
 - **Language**: Go (Gin)
 - **Port**: 8080
-- **Status**: Planned for deprecation (replaced by Lua→ENet→chungusway→gRPC pipeline)
+- **Status**: Planned for deprecation (replaced by Lua→ENet→chungusway→gRPC pipeline) — but still **unconditionally created per match** by chungustrator; deleting it today breaks match creation, not just stats
 
 ## Endpoints
 
@@ -17,14 +17,16 @@ Server Query Client (SQC) — a Go sidecar that queries game server stats via UD
 
 ## Environment Variables
 
+All six are required — `main.go` reads them at startup and `log.Fatalf`s if `GAME_SERVER_PORT` is missing/non-numeric; the others silently break auth/stat calls when absent. See `.env.example` for a complete working dev set.
+
 | Variable | Purpose |
 |----------|---------|
-| `PLAYER_SERVICE_IP` | ChungusDB endpoint (e.g., `http://player:3000`) |
+| `PLAYER_SERVICE_IP` | ChungusDB endpoint (e.g., `http://host.docker.internal:3000`) |
 | `GAME_SERVER_IP` | Game server IP (usually `localhost` in shared namespace) |
 | `GAME_SERVER_PORT` | UDP port for extinfo queries |
-| `AUTH_SERVICE_IP` | Auth service endpoint |
+| `AUTH_SERVICE_IP` | Auth service endpoint (e.g., `http://host.docker.internal:8081`) |
 | `SECRET_CHUNGUS` | JWT signing secret |
-| `CHUNGUS_KEY` | API key for auth service |
+| `CHUNGUS_KEY` | API key for auth service; must equal one of auth's `CHUNGUS_API_KEY_*` values |
 
 ## Key Files
 
